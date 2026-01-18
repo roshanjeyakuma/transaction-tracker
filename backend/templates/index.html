@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Transaction Tracker</title>
+    <style>
+        body { font-family: Arial; margin: 30px; }
+        input, select, button { margin: 5px; padding: 6px; }
+        table { border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ccc; padding: 8px; }
+    </style>
+</head>
+<body>
+
+<h2>Transaction Tracker</h2>
+
+<h3>Add Transaction</h3>
+
+<input id="description" placeholder="Description">
+<input id="amount" type="number" placeholder="Amount">
+<select id="type">
+    <option value="income">Income</option>
+    <option value="expense">Expense</option>
+</select>
+<input id="category" placeholder="Category">
+<input id="date" type="date">
+<button type="button" id="addBtn">Add</button>
+
+<h3>Summary</h3>
+<p id="summary">Loading...</p>
+
+<h3>Transactions</h3>
+<table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Description</th>
+            <th>Amount</th>
+            <th>Type</th>
+            <th>Category</th>
+            <th>Date</th>
+        </tr>
+    </thead>
+    <tbody id="tableBody"></tbody>
+</table>
+
+<script>
+function loadTransactions() {
+    fetch("/transactions")
+        .then(res => res.json())
+        .then(data => {
+            const table = document.getElementById("tableBody");
+            table.innerHTML = "";
+            data.forEach(t => {
+                table.innerHTML += `
+                    <tr>
+                        <td>${t.id}</td>
+                        <td>${t.description}</td>
+                        <td>${t.amount}</td>
+                        <td>${t.type}</td>
+                        <td>${t.category || ""}</td>
+                        <td>${t.transaction_date}</td>
+                    </tr>
+                `;
+            });
+        });
+}
+
+function loadSummary() {
+    fetch("/summary")
+        .then(res => res.json())
+        .then(s => {
+            document.getElementById("summary").innerText =
+                `Income: ${s.total_income}, Expense: ${s.total_expense}, Balance: ${s.balance}`;
+        });
+}
+
+document.getElementById("addBtn").addEventListener("click", function () {
+    fetch("/transactions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            description: document.getElementById("description").value,
+            amount: Number(document.getElementById("amount").value),
+            type: document.getElementById("type").value,
+            category: document.getElementById("category").value,
+            transaction_date: document.getElementById("date").value
+        })
+    }).then(() => {
+        loadTransactions();
+        loadSummary();
+    });
+});
+
+window.onload = function () {
+    loadTransactions();
+    loadSummary();
+};
+</script>
+
+</body>
+</html>
